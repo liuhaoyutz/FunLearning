@@ -65,8 +65,8 @@ class writer():
             streaming=True
             )
         
-        self.PLAN_PROMPT = ("你是一位小学6年级学生，男孩，擅长写作文，尤其擅长作文架构，现在你的任务是根据用户提供的作文主题，给出作文撰写提纲，并说明你这样设计作文提纲的理由。")
-        self.WRITER_PROMPT = ("你是一位小学6年级学生，男孩，擅长写作文，现在你的任务是撰写优秀的作文。根据用户提供的作文主题和初始大纲，写出尽可能好的作文，字数在600字左右。如果用户提供改进意见，请按改进意见进行修订。需要利用所有以下信息："
+        self.PLAN_PROMPT = ("你是一位小学6年级学生，擅长写作文，尤其擅长作文架构，现在你的任务是根据用户提供的作文主题，给出作文撰写提纲，并说明你这样设计作文提纲的理由。")
+        self.WRITER_PROMPT = ("你是一位小学6年级学生，擅长写作文，现在你的任务是撰写优秀的作文。根据用户提供的作文主题和初始大纲，写出尽可能好的作文，字数在600字左右。如果用户提供改进意见，请按改进意见进行修订。需要利用所有以下信息："
                               "------\n"
                               "{content}")
         
@@ -109,7 +109,8 @@ class writer():
         #编译graph，这样graph就是一个runnable，具有invoke, stream, batch等接口
         self.graph = builder.compile(
             checkpointer=memory,
-            interrupt_after=['planner', 'generate', 'reflect', 'research_plan', 'research_critique']
+            # interrupt_after=['planner', 'generate', 'reflect', 'research_plan', 'research_critique']
+            interrupt_after=['planner', 'generate', 'reflect']
         )
 
     # plan节点对应的函数，使用LLM生成作文大纲。
@@ -447,6 +448,8 @@ class writer_gui( ):
                 with gr.Accordion("管理", open=False):
                     checks = list(self.graph.nodes.keys())
                     checks.remove('__start__')
+                    checks.remove('research_plan')
+                    checks.remove('research_critique')
                     stop_after = gr.CheckboxGroup(checks,label="执行完毕后中断", value=checks, scale=0, min_width=400)
                     with gr.Row():
                         thread_pd = gr.Dropdown(choices=self.threads,interactive=True, label="选择线程", min_width=120, scale=0)
@@ -479,10 +482,12 @@ class writer_gui( ):
                 modify_btn.click(fn=self.modify_state, inputs=[gr.Number("plan", visible=False),
                                                           gr.Number("planner", visible=False), plan],outputs=None).then(
                                  fn=updt_disp, inputs=None, outputs=sdisps)
+            """
             with gr.Tab("调研结果"):
                 refresh_btn = gr.Button("刷新")
                 content_bx = gr.Textbox(label="内容", lines=10)
                 refresh_btn.click(fn=self.get_content, inputs=None, outputs=content_bx)
+            """
             with gr.Tab("草稿"):
                 with gr.Row():
                     refresh_btn = gr.Button("刷新")
@@ -492,6 +497,7 @@ class writer_gui( ):
                 modify_btn.click(fn=self.modify_state, inputs=[gr.Number("draft", visible=False),
                                                           gr.Number("generate", visible=False), draft_bx], outputs=None).then(
                                 fn=updt_disp, inputs=None, outputs=sdisps)
+            
             with gr.Tab("改进意见"):
                 with gr.Row():
                     refresh_btn = gr.Button("刷新")
@@ -502,11 +508,13 @@ class writer_gui( ):
                                                           gr.Number("reflect", visible=False), 
                                                           critique_bx], outputs=None).then(
                                 fn=updt_disp, inputs=None, outputs=sdisps)
+            
             with gr.Tab("状态快照"):
                 with gr.Row():
                     refresh_btn = gr.Button("刷新")
                 snapshots = gr.Textbox(label="状态快照")
                 refresh_btn.click(fn=get_snapshots, inputs=None, outputs=snapshots)
+        
         return demo
 
     def launch(self, share=None):
