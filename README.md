@@ -2,9 +2,11 @@
 基于LangGraph and Gradio的作文写作教学助手Agent。  
 
 Graph结构：  
+
 <img src="./images/flow.png" alt="awww" width="202" height="385">
 
-使用前，需要输入Tavily搜索api key，使用ollama本地部署的qwen2.5:32b模型  
+运行前，使用ollama本地部署的qwen2.5:32b模型。  
+运行时，会要求输入Tavily搜索api key，需要提前到Tavily网站https://tavily.com/申请。  
 
 运行：  
 python FunLearning.py 
